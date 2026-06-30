@@ -31,6 +31,14 @@
     padding: 0;
 }
 
+html, body {
+    max-width: 100%;
+    overflow-x: hidden;
+    width: 100%;
+    position: relative;
+    touch-action: pan-y;
+}
+
 body {
     font-family: var(--font-sans);
     background: radial-gradient(circle at top right, #0d1e40 0%, var(--bg-primary) 70%);
@@ -38,7 +46,6 @@ body {
     color: var(--text-primary);
     min-height: 100vh;
     overflow-y: auto;
-    overflow-x: hidden;
 }
 
 /* Scrollbar styling */
