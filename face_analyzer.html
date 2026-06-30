@@ -1454,6 +1454,39 @@
             }
         }
 
+        // Helper to convert normalized landmarks coords to correct canvas pixels maintaining aspect ratio
+        function getCanvasCoords(pt) {
+            const imgW = video.videoWidth || 640;
+            const imgH = video.videoHeight || 480;
+            const canvasW = canvas.width;
+            const canvasH = canvas.height;
+            
+            const imgRatio = imgW / imgH;
+            const canvasRatio = canvasW / canvasH;
+            
+            let sx = 0, sy = 0, sWidth = imgW, sHeight = imgH;
+            if (imgRatio > canvasRatio) {
+                // Video is wider than canvas viewport - crop left/right
+                sWidth = imgH * canvasRatio;
+                sx = (imgW - sWidth) / 2;
+            } else {
+                // Video is taller than canvas viewport - crop top/bottom
+                sHeight = imgW / canvasRatio;
+                sy = (imgH - sHeight) / 2;
+            }
+            
+            const px = pt.x * imgW;
+            const py = pt.y * imgH;
+            
+            const xCanvas = (px - sx) / sWidth;
+            const yCanvas = (py - sy) / sHeight;
+            
+            return {
+                x: (1 - xCanvas) * canvasW, // Mirrored output
+                y: yCanvas * canvasH
+            };
+        }
+
         // MediaPipe Face Mesh results callback
         function onFaceMeshResults(results) {
             if (!isCameraActive) return;
@@ -1461,10 +1494,28 @@
             // Clear canvas
             ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-            // Draw webcam frame mirrored
+            // Compute cropping bounds
+            const imgW = results.image.width;
+            const imgH = results.image.height;
+            const canvasW = canvas.width;
+            const canvasH = canvas.height;
+            
+            const imgRatio = imgW / imgH;
+            const canvasRatio = canvasW / canvasH;
+            
+            let sx = 0, sy = 0, sWidth = imgW, sHeight = imgH;
+            if (imgRatio > canvasRatio) {
+                sWidth = imgH * canvasRatio;
+                sx = (imgW - sWidth) / 2;
+            } else {
+                sHeight = imgW / canvasRatio;
+                sy = (imgH - sHeight) / 2;
+            }
+
+            // Draw webcam frame mirrored and cropped to aspect ratio (No stretching!)
             ctx.save();
             ctx.scale(-1, 1);
-            ctx.drawImage(results.image, -canvas.width, 0, canvas.width, canvas.height);
+            ctx.drawImage(results.image, sx, sy, sWidth, sHeight, -canvasW, 0, canvasW, canvasH);
             ctx.restore();
 
             if (results.multiFaceLandmarks && results.multiFaceLandmarks.length > 0) {
@@ -1485,13 +1536,16 @@
                     // Estimate scaling based on distance between temples (e.g. landmarks 33 and 263)
                     const p1 = landmarks[33];
                     const p2 = landmarks[263];
-                    const d = Math.sqrt(Math.pow(p2.x - p1.x, 2) + Math.pow(p2.y - p1.y, 2)) * canvas.width;
+                    const coords1 = getCanvasCoords(p1);
+                    const coords2 = getCanvasCoords(p2);
+                    const d = Math.sqrt(Math.pow(coords2.x - coords1.x, 2) + Math.pow(coords2.y - coords1.y, 2));
                     const scale = d / 120.0;
                     
                     // Face center point
                     const nose = landmarks[4];
-                    const cX = (1 - nose.x) * canvas.width; // mirrord coordinates
-                    const cY = nose.y * canvas.height;
+                    const noseCoords = getCanvasCoords(nose);
+                    const cX = noseCoords.x;
+                    const cY = noseCoords.y;
                     
                     drawMakeupGuidesOnCanvas(cX, cY, scale);
                 }
@@ -1507,10 +1561,9 @@
             ctx.fillStyle = isScanning ? "rgba(255, 20, 147, 0.75)" : "rgba(100, 255, 218, 0.75)";
             for (let i = 0; i < landmarks.length; i++) {
                 const pt = landmarks[i];
-                const x = (1 - pt.x) * canvas.width; // Mirrored
-                const y = pt.y * canvas.height;
+                const coords = getCanvasCoords(pt);
                 ctx.beginPath();
-                ctx.arc(x, y, 1.2, 0, 2 * Math.PI);
+                ctx.arc(coords.x, coords.y, 1.2, 0, 2 * Math.PI);
                 ctx.fill();
             }
 
@@ -1526,10 +1579,9 @@
             ctx.beginPath();
             faceContourPoints.forEach((idx, i) => {
                 const pt = landmarks[idx];
-                const x = (1 - pt.x) * canvas.width; // Mirrored
-                const y = pt.y * canvas.height;
-                if (i === 0) ctx.moveTo(x, y);
-                else ctx.lineTo(x, y);
+                const coords = getCanvasCoords(pt);
+                if (i === 0) ctx.moveTo(coords.x, coords.y);
+                else ctx.lineTo(coords.x, coords.y);
             });
             ctx.closePath();
             ctx.stroke();
@@ -1555,10 +1607,9 @@
             ctx.beginPath();
             indices.forEach((idx, i) => {
                 const pt = landmarks[idx];
-                const x = (1 - pt.x) * canvas.width;
-                const y = pt.y * canvas.height;
-                if (i === 0) ctx.moveTo(x, y);
-                else ctx.lineTo(x, y);
+                const coords = getCanvasCoords(pt);
+                if (i === 0) ctx.moveTo(coords.x, coords.y);
+                else ctx.lineTo(coords.x, coords.y);
             });
             ctx.closePath();
             ctx.stroke();
@@ -1568,10 +1619,9 @@
             ctx.beginPath();
             indices.forEach((idx, i) => {
                 const pt = landmarks[idx];
-                const x = (1 - pt.x) * canvas.width;
-                const y = pt.y * canvas.height;
-                if (i === 0) ctx.moveTo(x, y);
-                else ctx.lineTo(x, y);
+                const coords = getCanvasCoords(pt);
+                if (i === 0) ctx.moveTo(coords.x, coords.y);
+                else ctx.lineTo(coords.x, coords.y);
             });
             ctx.stroke();
         }
@@ -1793,19 +1843,34 @@
 
             // 1. Calculate Face Geometry & Structure Type
             if (currentLandmarks && !isSimulatedCamera) {
+                const imgW = video.videoWidth || 640;
+                const imgH = video.videoHeight || 480;
+
                 const pLeft = currentLandmarks[234];
                 const pRight = currentLandmarks[454];
-                const fWidth = Math.sqrt(Math.pow(pRight.x - pLeft.x, 2) + Math.pow(pRight.y - pLeft.y, 2));
+                const leftX = pLeft.x * imgW;
+                const leftY = pLeft.y * imgH;
+                const rightX = pRight.x * imgW;
+                const rightY = pRight.y * imgH;
+                const fWidth = Math.sqrt(Math.pow(rightX - leftX, 2) + Math.pow(rightY - leftY, 2));
 
                 const pTop = currentLandmarks[10];
                 const pBottom = currentLandmarks[152];
-                const fHeight = Math.sqrt(Math.pow(pBottom.x - pTop.x, 2) + Math.pow(pBottom.y - pTop.y, 2));
+                const topX = pTop.x * imgW;
+                const topY = pTop.y * imgH;
+                const bottomX = pBottom.x * imgW;
+                const bottomY = pBottom.y * imgH;
+                const fHeight = Math.sqrt(Math.pow(bottomX - topX, 2) + Math.pow(bottomY - topY, 2));
 
                 const ratio = fWidth / fHeight;
 
                 const pJawL = currentLandmarks[58];
                 const pJawR = currentLandmarks[288];
-                const jawWidth = Math.sqrt(Math.pow(pJawR.x - pJawL.x, 2) + Math.pow(pJawR.y - pJawL.y, 2));
+                const jawLX = pJawL.x * imgW;
+                const jawLY = pJawL.y * imgH;
+                const jawRX = pJawR.x * imgW;
+                const jawRY = pJawR.y * imgH;
+                const jawWidth = Math.sqrt(Math.pow(jawRX - jawLX, 2) + Math.pow(jawRY - jawLY, 2));
 
                 if (ratio > 0.84) {
                     currentFaceType = "丸顔 (Round)";
