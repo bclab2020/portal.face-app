@@ -864,6 +864,12 @@
 
         // Setup initial UI layout based on vertical query parameter
         document.addEventListener('DOMContentLoaded', () => {
+            // Hide standalone header if running inside portal iframe to save space on mobile
+            if (window.self !== window.top) {
+                const headerEl = document.querySelector('header');
+                if (headerEl) headerEl.style.display = 'none';
+            }
+
             const urlParams = new URLSearchParams(window.location.search);
             const vertical = urlParams.get('vertical') || 'beauty';
             const isHealthMode = (vertical === 'health' || vertical === 'sports');
@@ -1629,6 +1635,10 @@
             hudPulseCircle.classList.add('animating');
             cameraScanLine.style.display = 'block';
 
+            // Hide bottom oscilloscope during active scan
+            const osc = document.querySelector('.ppg-oscilloscope-container');
+            if (osc) osc.style.display = 'none';
+
             // Show circular scanner overlay countdown (Fixed 30s based on evidence)
             countdownOverlay.classList.add('active');
             let count = 30;
@@ -1651,6 +1661,10 @@
             startScanBtn.disabled = false;
             hudPulseCircle.classList.remove('animating');
             cameraScanLine.style.display = 'none';
+
+            // Show bottom oscilloscope after scan completes
+            const osc = document.querySelector('.ppg-oscilloscope-container');
+            if (osc) osc.style.display = 'flex';
 
             // 1. Calculate Face Geometry & Structure Type
             // Real metrics calculation using Landmarks if active
