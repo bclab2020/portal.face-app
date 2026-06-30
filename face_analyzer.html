@@ -666,6 +666,7 @@
                 <div class="input-group" id="userAgeGroup" style="margin-top: 12px;">
                     <label for="userAgeSegment">推定年齢（イメージモデル調整用）</label>
                     <select class="glass-select" id="userAgeSegment">
+                        <option value="10">10代・学生 (スクール・プチプラ)</option>
                         <option value="20">20代 (フレッシュ・トレンド)</option>
                         <option value="30">30代 (フェミニン・上品)</option>
                         <option value="40">40代〜 (エレガント・エイジングケア)</option>
@@ -999,6 +1000,58 @@
                     price: "¥4,400 (税込)",
                     img: "https://images.unsplash.com/photo-1596462502278-27bfdc403348?auto=format&fit=crop&q=80&w=200",
                     desc: "大人っぽい品格と奥行きを与えるくすみローズチーク"
+                }
+            ]
+        };
+
+        // Teen/Student cosmetics data sources (affordable Petit-price favorites)
+        const teenCosmeticsDB = {
+            cute: [
+                {
+                    name: "マシュマロフィニッシュパウダー (マットオークル)",
+                    brand: "CANMAKE (キャンメイク)",
+                    price: "¥1,034 (税込)",
+                    img: "https://images.unsplash.com/photo-1596462502278-27bfdc403348?auto=format&fit=crop&q=80&w=200",
+                    desc: "中高生に大人気！ふわふわマシュマロ美肌を作るパウダー"
+                },
+                {
+                    name: "パウダーチークス (シアーピンク)",
+                    brand: "CANMAKE (キャンメイク)",
+                    price: "¥660 (税込)",
+                    img: "https://images.unsplash.com/photo-1512496015851-a90fb38ba796?auto=format&fit=crop&q=80&w=200",
+                    desc: "スクールメイクでも浮かないナチュラルな血色感チーク"
+                }
+            ],
+            cool: [
+                {
+                    name: "ダブルラインエキスパート (極薄ブラウン)",
+                    brand: "KATE / カネボウ",
+                    price: "¥935 (税込)",
+                    img: "https://images.unsplash.com/photo-1522335789203-aabd1fc54bc9?auto=format&fit=crop&q=80&w=200",
+                    desc: "二重や涙袋の影を自然に強調して、切れ長でクールな目元を作る影用ライナー"
+                },
+                {
+                    name: "ミックスカラーチークN (シェーディングカラー)",
+                    brand: "CEZANNE (セザンヌ)",
+                    price: "¥748 (税込)",
+                    img: "https://images.unsplash.com/photo-1596462502278-27bfdc403348?auto=format&fit=crop&q=80&w=200",
+                    desc: "プチプラで簡単に陰影を作り、すっきり小顔に見せるマットパウダー"
+                }
+            ],
+            elegant: [
+                {
+                    name: "リップモンスター (憧れラスボス色)",
+                    brand: "KATE / カネボウ",
+                    price: "¥1,540 (税込)",
+                    img: "https://images.unsplash.com/photo-1586495777744-4413f21062fa?auto=format&fit=crop&q=80&w=200",
+                    desc: "落ちにくくツヤ続く！少し大人っぽく品のある唇に仕上げるバズリップ"
+                },
+                {
+                    name: "パールグロウハイライト (シャンパンベージュ)",
+                    brand: "CEZANNE (セザンヌ)",
+                    price: "¥660 (税込)",
+                    img: "https://images.unsplash.com/photo-1512496015851-a90fb38ba796?auto=format&fit=crop&q=80&w=200",
+                    desc: "塗るレフ板！鼻筋や目元に透明感あるエレガントな輝きを与える名品"
                 }
             ]
         };
@@ -1946,7 +1999,9 @@
 
                 const target = desiredFaceTypeSelect.value;
                 const guide = makeupGuides[target];
-                const cosmetics = cosmeticsDB[target];
+                const ageSeg = userAgeSegmentSelect.value;
+                const cosmetics = (ageSeg === '10') ? teenCosmeticsDB[target] : cosmeticsDB[target];
+                const purchaseAlertText = (ageSeg === '10') ? 'プチプラ学割10%OFFクーポンを適用しました！ドラッグストア連携ストアへ遷移します。' : '限定20%OFFクーポンコードを適用しました！ブランド公式ストアへ遷移します。';
 
                 const gTitle = document.getElementById('guideTitle');
                 if (gTitle) gTitle.innerText = `${guide.title} (あなたの顔型: ${currentFaceType})`;
@@ -1975,7 +2030,7 @@
                             <div class="cosmetic-brand">${prod.brand}</div>
                             <div class="cosmetic-bottom">
                                 <span class="cosmetic-price">${prod.price}</span>
-                                <button class="cosmetic-btn" onclick="alert('${prod.name}の限定20%OFFクーポンコードを適用しました！資生堂公式ストアへ遷移します。')">今すぐ購入</button>
+                                <button class="cosmetic-btn" onclick="alert('${prod.name}の${purchaseAlertText}')">今すぐ購入</button>
                             </div>
                         </div>
                     `;
@@ -1989,6 +2044,15 @@
             if (makeupGuideCard.classList.contains('active')) {
                 renderMakeupAdvice();
                 appStatusBar.innerText = "メイクアップガイドを更新しました。";
+            }
+        });
+
+        // Redraw tips dynamically when user changes their age segment
+        userAgeSegmentSelect.addEventListener('change', () => {
+            if (makeupGuideCard.classList.contains('active') || faceVisualMatchCard.style.display === 'block') {
+                updateFaceVisualMatch();
+                renderMakeupAdvice();
+                appStatusBar.innerText = "年齢設定に応じたイメージモデル画像とコスメ情報を更新しました。";
             }
         });
 
@@ -2026,6 +2090,7 @@
                 symmetry: currentSymmetry,
                 detectedFaceType: currentFaceType,
                 targetFaceType: desiredFaceTypeSelect.value,
+                userAgeSegment: userAgeSegmentSelect.value,
                 makeupGuide: makeupGuides[desiredFaceTypeSelect.value]
             };
 

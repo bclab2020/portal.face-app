@@ -442,7 +442,11 @@ document.addEventListener('DOMContentLoaded', () => {
                     if (newPost.sharedMetric && newPost.sharedMetric.modeName.includes("顔")) {
                         expertName = "Rin (ビューティアドバイザー)";
                         expertAvatar = "凛";
-                        replyContent = "顔骨格とrPPG脈拍測定の共有ありがとうございます！ご希望の顔立ちに向けたコントゥアリングメイクと併せて、デコルテ付近のリンパマッサージを行うと、血流がさらに良くなりrPPG指標や肌のトーンが向上しますよ。おすすめ化粧品もぜひ試してみてくださいね！";
+                        if (newPost.sharedMetric.userAgeSegment === '10') {
+                            replyContent = "中高生メンバーさん、測定結果の共有ありがとう！✨ 校則が厳しくてもバレにくい超自然なスクールメイクのコツや、放課後のお出かけにぴったりなプチプラ（キャンメイクやケイト）を使った簡単コントゥアリングをアドバイスカードに載せておいたよ！テスト前の息抜きや、スマホの見すぎで疲れたときは深呼吸してみてね。応援してるよ！";
+                        } else {
+                            replyContent = "顔骨格とrPPG脈拍測定の共有ありがとうございます！ご希望の顔立ちに向けたコントゥアリングメイクと併せて、デコルテ付近のリンパマッサージを行うと、血流がさらに良くなりrPPG指標や肌のトーンが向上しますよ。おすすめ化粧品もぜひ試してみてくださいね！";
+                        }
                     }
 
                     newPost.replies.push({
@@ -503,7 +507,8 @@ document.addEventListener('DOMContentLoaded', () => {
             return {
                 modeName: "✨ 顔アライメント＆rPPGメイク",
                 metrics: metricsList,
-                swayArea: null
+                swayArea: null,
+                userAgeSegment: session.metrics.userAgeSegment
             };
         }
 
@@ -999,49 +1004,98 @@ document.addEventListener('DOMContentLoaded', () => {
             } else {
                 container.classList.add('matching-tilt'); // Pink border/shadow styling matching beauty
                 const target = metrics.targetFaceType;
+                const isTeen = (metrics.userAgeSegment === '10');
                 
                 if (target === 'cute') {
-                    adHtml = `
-                        <div class="ad-matched-box">
-                            <span class="matched-pill tilt" style="background:rgba(255,20,147,0.08); border-color:var(--accent-pink); color:var(--accent-pink);">甘口キュートメイク連動 (丸顔強調)</span>
-                            <div class="ad-img-box" style="background-image: url('https://images.unsplash.com/photo-1596462502278-27bfdc403348?auto=format&fit=crop&q=80&w=400');"></div>
-                            <div class="ad-title">ELIXIR メルティシフォンパウダーチーク</div>
-                            <div class="ad-desc">丸顔アライメントをふんわり可愛らしく引き立てるピーチピンク。AIメイクガイドラインの位置にのせるだけで自然な血色感に。</div>
-                            <div class="ad-product-price">
-                                <span class="orig">¥2,750</span>
-                                <span class="promo">¥2,200 (20% OFF)</span>
+                    if (isTeen) {
+                        adHtml = `
+                            <div class="ad-matched-box">
+                                <span class="matched-pill tilt" style="background:rgba(255,20,147,0.08); border-color:var(--accent-pink); color:var(--accent-pink);">学生向けスクールメイク連動 (毛穴・テカリカバー)</span>
+                                <div class="ad-img-box" style="background-image: url('https://images.unsplash.com/photo-1596462502278-27bfdc403348?auto=format&fit=crop&q=80&w=400');"></div>
+                                <div class="ad-title">CANMAKE マシュマロフィニッシュパウダー</div>
+                                <div class="ad-desc">中高生に絶大な人気を誇るふんわり肌パウダー。テカリを抑えて自然な毛穴カバーを叶え、スクールメイクにも最適！</div>
+                                <div class="ad-product-price">
+                                    <span class="orig">¥1,034</span>
+                                    <span class="promo">¥930 (学割 10% OFF)</span>
+                                </div>
+                                <button class="ad-btn" style="background:var(--accent-pink); color:#000;" onclick="alert('マツモトキヨシ公式オンラインへ遷移します！学生割引クーポン【TEENCUTE】適用済')">学割クーポンで購入する</button>
                             </div>
-                            <button class="ad-btn" style="background:var(--accent-pink); color:#000;" onclick="alert('資生堂ELIXIR公式ショップへ遷移します！クーポンコード【CUTE20】適用済')">特別クーポンで購入する</button>
-                        </div>
-                    `;
+                        `;
+                    } else {
+                        adHtml = `
+                            <div class="ad-matched-box">
+                                <span class="matched-pill tilt" style="background:rgba(255,20,147,0.08); border-color:var(--accent-pink); color:var(--accent-pink);">甘口キュートメイク連動 (丸顔強調)</span>
+                                <div class="ad-img-box" style="background-image: url('https://images.unsplash.com/photo-1596462502278-27bfdc403348?auto=format&fit=crop&q=80&w=400');"></div>
+                                <div class="ad-title">ELIXIR メルティシフォンパウダーチーク</div>
+                                <div class="ad-desc">丸顔アライメントをふんわり可愛らしく引き立てるピーチピンク。AIメイクガイドラインの位置にのせるだけで自然な血色感に。</div>
+                                <div class="ad-product-price">
+                                    <span class="orig">¥2,750</span>
+                                    <span class="promo">¥2,200 (20% OFF)</span>
+                                </div>
+                                <button class="ad-btn" style="background:var(--accent-pink); color:#000;" onclick="alert('資生堂ELIXIR公式ショップへ遷移します！クーポンコード【CUTE20】適用済')">特別クーポンで購入する</button>
+                            </div>
+                        `;
+                    }
                 } else if (target === 'cool') {
-                    adHtml = `
-                        <div class="ad-matched-box">
-                            <span class="matched-pill tilt" style="background:rgba(255,20,147,0.08); border-color:var(--accent-pink); color:var(--accent-pink);">クールハンサムメイク連動 (シェーディング)</span>
-                            <div class="ad-img-box" style="background-image: url('https://images.unsplash.com/photo-1522335789203-aabd1fc54bc9?auto=format&fit=crop&q=80&w=400');"></div>
-                            <div class="ad-title">KATE 3Dクリエイトコントゥア</div>
-                            <div class="ad-desc">頬骨の下やエラ骨格を補正してシャープに引き締める影色。AIのガイド座標に沿ってブラシを滑らせるだけで陰影をコントロール。</div>
-                            <div class="ad-product-price">
-                                <span class="orig">¥1,920</span>
-                                <span class="promo">¥1,540 (20% OFF)</span>
+                    if (isTeen) {
+                        adHtml = `
+                            <div class="ad-matched-box">
+                                <span class="matched-pill tilt" style="background:rgba(255,20,147,0.08); border-color:var(--accent-pink); color:var(--accent-pink);">学生向けプチプラメイク連動 (デカ目シェーディング)</span>
+                                <div class="ad-img-box" style="background-image: url('https://images.unsplash.com/photo-1522335789203-aabd1fc54bc9?auto=format&fit=crop&q=80&w=400');"></div>
+                                <div class="ad-title">KATE ダブルラインエキスパート</div>
+                                <div class="ad-desc">涙袋の影や二重線をくっきり強調する極薄カラーライナー。デカ目効果＆ハンサムな目元づくりをプチプラで実現。</div>
+                                <div class="ad-product-price">
+                                    <span class="orig">¥935</span>
+                                    <span class="promo">¥840 (学割 10% OFF)</span>
+                                </div>
+                                <button class="ad-btn" style="background:var(--accent-pink); color:#000;" onclick="alert('ココカラファイン公式オンラインへ遷移します！学生割引クーポン【TEENCOOL】適用済')">学割クーポンで購入する</button>
                             </div>
-                            <button class="ad-btn" style="background:var(--accent-pink); color:#000;" onclick="alert('KATE公式ショップへ遷移します！クーポンコード【COOL20】適用済')">特別クーポンで購入する</button>
-                        </div>
-                    `;
+                        `;
+                    } else {
+                        adHtml = `
+                            <div class="ad-matched-box">
+                                <span class="matched-pill tilt" style="background:rgba(255,20,147,0.08); border-color:var(--accent-pink); color:var(--accent-pink);">クールハンサムメイク連動 (シェーディング)</span>
+                                <div class="ad-img-box" style="background-image: url('https://images.unsplash.com/photo-1522335789203-aabd1fc54bc9?auto=format&fit=crop&q=80&w=400');"></div>
+                                <div class="ad-title">KATE 3Dクリエイトコントゥア</div>
+                                <div class="ad-desc">頬骨の下やエラ骨格を補正してシャープに引き締める影色。AIのガイド座標に沿ってブラシを滑らせるだけで陰影をコントロール。</div>
+                                <div class="ad-product-price">
+                                    <span class="orig">¥1,920</span>
+                                    <span class="promo">¥1,540 (20% OFF)</span>
+                                </div>
+                                <button class="ad-btn" style="background:var(--accent-pink); color:#000;" onclick="alert('KATE公式ショップへ遷移します！クーポンコード【COOL20】適用済')">特別クーポンで購入する</button>
+                            </div>
+                        `;
+                    }
                 } else { // elegant
-                    adHtml = `
-                        <div class="ad-matched-box">
-                            <span class="matched-pill tilt" style="background:rgba(255,20,147,0.08); border-color:var(--accent-pink); color:var(--accent-pink);">エレガント大人顔連動 (ハリ肌美容液)</span>
-                            <div class="ad-img-box" style="background-image: url('https://images.unsplash.com/photo-1571781926291-c477ebfd024b?auto=format&fit=crop&q=80&w=400');"></div>
-                            <div class="ad-title">ELIXIR デザインタイムセラム</div>
-                            <div class="ad-desc">表情の動きと肌アライメント（ハリ）に着目した先進美容液。顔の血流巡りを整え、リフトアップメイクの効果を引き出します。</div>
-                            <div class="ad-product-price">
-                                <span class="orig">¥6,180</span>
-                                <span class="promo">¥4,950 (20% OFF)</span>
+                    if (isTeen) {
+                        adHtml = `
+                            <div class="ad-matched-box">
+                                <span class="matched-pill tilt" style="background:rgba(255,20,147,0.08); border-color:var(--accent-pink); color:var(--accent-pink);">学生向けトレンドリップ連動 (落ちない大人色)</span>
+                                <div class="ad-img-box" style="background-image: url('https://images.unsplash.com/photo-1586495777744-4413f21062fa?auto=format&fit=crop&q=80&w=400');"></div>
+                                <div class="ad-title">KATE リップモンスター</div>
+                                <div class="ad-desc">落ちにくさと発色の良さでバズり続ける伝説リップ。大人っぽい表情を作る抜け感カラーで、背伸びしたい日のメイクに。</div>
+                                <div class="ad-product-price">
+                                    <span class="orig">¥1,540</span>
+                                    <span class="promo">¥1,380 (学割 10% OFF)</span>
+                                </div>
+                                <button class="ad-btn" style="background:var(--accent-pink); color:#000;" onclick="alert('アットコスメショッピングへ遷移します！学生割引クーポン【TEENELEGANT】適用済')">学割クーポンで購入する</button>
                             </div>
-                            <button class="ad-btn" style="background:var(--accent-pink); color:#000;" onclick="alert('資生堂ELIXIR公式ショップへ遷移します！クーポンコード【ELEGANT20】適用済')">特別クーポンで購入する</button>
-                        </div>
-                    `;
+                        `;
+                    } else {
+                        adHtml = `
+                            <div class="ad-matched-box">
+                                <span class="matched-pill tilt" style="background:rgba(255,20,147,0.08); border-color:var(--accent-pink); color:var(--accent-pink);">エレガント大人顔連動 (ハリ肌美容液)</span>
+                                <div class="ad-img-box" style="background-image: url('https://images.unsplash.com/photo-1571781926291-c477ebfd024b?auto=format&fit=crop&q=80&w=400');"></div>
+                                <div class="ad-title">ELIXIR デザインタイムセラム</div>
+                                <div class="ad-desc">表情の動きと肌アライメント（ハリ）に着目した先進美容液。顔の血流巡りを整え、リフトアップメイクの効果を引き出します。</div>
+                                <div class="ad-product-price">
+                                    <span class="orig">¥6,180</span>
+                                    <span class="promo">¥4,950 (20% OFF)</span>
+                                </div>
+                                <button class="ad-btn" style="background:var(--accent-pink); color:#000;" onclick="alert('資生堂ELIXIR公式ショップへ遷移します！クーポンコード【ELEGANT20】適用済')">特別クーポンで購入する</button>
+                            </div>
+                        `;
+                    }
                 }
             }
             dynamicAdSpace.innerHTML = adHtml;
