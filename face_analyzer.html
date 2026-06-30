@@ -948,14 +948,16 @@
             const isHealthMode = (vertical === 'health' || vertical === 'sports');
             
             if (isHealthMode) {
-                // Hide beauty option, show health option
+                // Hide beauty option and age group, show health option
                 const faceGroup = document.getElementById('desiredFaceTypeGroup');
+                const ageGroup = document.getElementById('userAgeGroup');
                 const healthGroup = document.getElementById('healthOptionsGroup');
                 const optTitle = document.querySelector('#beautyOptionsCard .panel-title');
                 const optNote = document.querySelector('#beautyOptionsCard div[style*="font-size:11px"]');
                 const durationBadge = document.getElementById('scanDurationBadge');
                 
                 if (faceGroup) faceGroup.style.display = 'none';
+                if (ageGroup) ageGroup.style.display = 'none';
                 if (healthGroup) healthGroup.style.display = 'block';
                 if (optTitle) {
                     optTitle.innerText = "🏥 測定オプション設定";
@@ -979,11 +981,15 @@
                     reportTitle.style.borderBottomColor = "rgba(0,191,255,0.2)";
                 }
 
-                // Customize grid labels to physical wellness/alignment terms
-                const lblFaceType = document.getElementById('labelFaceType');
-                const lblSymmetry = document.getElementById('labelSymmetry');
-                if (lblFaceType) lblFaceType.innerText = "頭部アライメント分類";
-                if (lblSymmetry) lblSymmetry.innerText = "顔面アライメント対称性";
+                // Hide beauty results badges (face type and symmetry) from results grid
+                const faceTypeVal = document.getElementById('resFaceType');
+                const symmetryVal = document.getElementById('resSymmetry');
+                if (faceTypeVal && faceTypeVal.parentElement) {
+                    faceTypeVal.parentElement.style.display = 'none';
+                }
+                if (symmetryVal && symmetryVal.parentElement) {
+                    symmetryVal.parentElement.style.display = 'none';
+                }
             }
         });
 
@@ -1944,6 +1950,15 @@
         // Helper to update face shape image and historical figures (Targeting Japanese beauty models)
         function updateFaceVisualMatch() {
             if (!faceVisualMatchCard) return;
+            
+            const urlParams = new URLSearchParams(window.location.search);
+            const vertical = urlParams.get('vertical') || 'beauty';
+            const isHealthMode = (vertical === 'health' || vertical === 'sports');
+
+            if (isHealthMode) {
+                faceVisualMatchCard.style.display = 'none';
+                return;
+            }
             faceVisualMatchCard.style.display = 'block';
             
             const ageSeg = userAgeSegmentSelect.value; // '20', '30', or '40'

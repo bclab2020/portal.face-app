@@ -618,10 +618,13 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         
         // Populate step-by-step advice summary
-        let adviceHtml = `<strong>目標イメージ: ${metrics.makeupGuide.title}</strong><br><br>`;
-        metrics.makeupGuide.steps.forEach(step => {
-            adviceHtml += `・ ${step}<br>`;
-        });
+        let adviceHtml = '';
+        if (metrics.makeupGuide) {
+            adviceHtml = `<strong>目標イメージ: ${metrics.makeupGuide.title}</strong><br><br>`;
+            metrics.makeupGuide.steps.forEach(step => {
+                adviceHtml += `・ ${step}<br>`;
+            });
+        }
         adviceVal.innerHTML = adviceHtml;
 
         // Grade calculation
@@ -630,6 +633,38 @@ document.addEventListener('DOMContentLoaded', () => {
             grade = 'A';
         }
         gradeBadge.innerText = grade;
+
+        // Toggle visibility of beauty elements based on active portal vertical
+        const typeBox = document.getElementById('faceReportTypeBox');
+        const symmetryBox = document.getElementById('faceReportSymmetryBox');
+        const adviceBox = document.getElementById('faceReportAdviceBox');
+        const isHealth = (currentVertical === 'health' || currentVertical === 'sports');
+
+        if (typeBox) typeBox.style.display = isHealth ? 'none' : 'block';
+        if (symmetryBox) symmetryBox.style.display = isHealth ? 'none' : 'block';
+        if (adviceBox) adviceBox.style.display = isHealth ? 'none' : 'block';
+
+        // Adjust title and badge color based on mode
+        const titleEl = reportCard.querySelector('.report-header h3');
+        if (isHealth) {
+            if (titleEl) {
+                titleEl.innerText = "📊 自律神経＆ストレス診断レポート";
+                titleEl.style.color = "var(--accent-blue)";
+            }
+            gradeBadge.style.background = "var(--accent-blue)";
+            gradeBadge.style.color = "#000";
+            reportCard.style.borderColor = "rgba(0, 191, 255, 0.3)";
+            reportCard.style.background = "linear-gradient(180deg, var(--bg-card) 0%, rgba(0, 191, 255, 0.02) 100%)";
+        } else {
+            if (titleEl) {
+                titleEl.innerText = "📊 美容顔アライメント＆健康診断レポート";
+                titleEl.style.color = "var(--accent-pink)";
+            }
+            gradeBadge.style.background = "var(--accent-pink)";
+            gradeBadge.style.color = "#000";
+            reportCard.style.borderColor = "rgba(255, 20, 147, 0.3)";
+            reportCard.style.background = "linear-gradient(180deg, var(--bg-card) 0%, rgba(255, 20, 147, 0.02) 100%)";
+        }
 
         reportCard.style.display = 'block';
 

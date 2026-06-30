@@ -1107,11 +1107,11 @@
                         </div>
                         <div class="report-body">
                             <div class="report-grid-metrics" style="display:grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap:15px; margin-bottom:20px;">
-                                <div class="metric-item" style="background:var(--bg-glass); border:1px solid var(--border-color); border-radius:10px; padding:12px; text-align:center;">
+                                <div id="faceReportTypeBox" class="metric-item" style="background:var(--bg-glass); border:1px solid var(--border-color); border-radius:10px; padding:12px; text-align:center;">
                                     <div style="font-size:10px; color:var(--text-secondary); margin-bottom:5px;">判定顔骨格型</div>
                                     <div id="faceReportType" style="font-size:14px; font-weight:700; color:var(--accent-teal);">--</div>
                                 </div>
-                                <div class="metric-item" style="background:var(--bg-glass); border:1px solid var(--border-color); border-radius:10px; padding:12px; text-align:center;">
+                                <div id="faceReportSymmetryBox" class="metric-item" style="background:var(--bg-glass); border:1px solid var(--border-color); border-radius:10px; padding:12px; text-align:center;">
                                     <div style="font-size:10px; color:var(--text-secondary); margin-bottom:5px;">顔の左右対称性</div>
                                     <div id="faceReportSymmetry" style="font-size:14px; font-weight:700; color:var(--text-primary);">-- %</div>
                                 </div>
@@ -1177,7 +1177,7 @@
                             </div>
                             
                             <!-- Custom Makeup Advice summary -->
-                            <div style="background: rgba(255, 20, 147, 0.05); border: 1px dashed rgba(255, 20, 147, 0.2); border-radius: 10px; padding: 15px; margin-bottom: 20px;">
+                            <div id="faceReportAdviceBox" style="background: rgba(255, 20, 147, 0.05); border: 1px dashed rgba(255, 20, 147, 0.2); border-radius: 10px; padding: 15px; margin-bottom: 20px;">
                                 <div style="font-size:11px; font-weight:700; color:var(--accent-pink); margin-bottom:5px;">💄 なりたい顔に向けたメイクアドバイス</div>
                                 <div id="faceReportAdvice" style="font-size:12px; line-height:1.5; color:var(--text-primary);"></div>
                             </div>
