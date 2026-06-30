@@ -663,6 +663,14 @@
                         <option value="elegant">エレガント・大人っぽ (卵型の黄金比率へ補正)</option>
                     </select>
                 </div>
+                <div class="input-group" id="userAgeGroup" style="margin-top: 12px;">
+                    <label for="userAgeSegment">推定年齢（イメージモデル調整用）</label>
+                    <select class="glass-select" id="userAgeSegment">
+                        <option value="20">20代 (フレッシュ・トレンド)</option>
+                        <option value="30">30代 (フェミニン・上品)</option>
+                        <option value="40">40代〜 (エレガント・エイジングケア)</option>
+                    </select>
+                </div>
                 <div class="input-group" id="healthOptionsGroup" style="display: none; margin-bottom: 15px;">
                     <label>自律神経測定モード</label>
                     <div style="font-size: 13px; font-weight:700; color:var(--accent-blue); padding: 8px 12px; background:rgba(0,191,255,0.08); border:1px solid rgba(0,191,255,0.2); border-radius:8px; display:inline-block; width:100%; box-sizing:border-box;">
@@ -704,6 +712,27 @@
                     <div class="metric-badge" style="grid-column: span 2; background: linear-gradient(135deg, rgba(100,255,218,0.05) 0%, rgba(100,255,218,0) 100%); border-color: rgba(100,255,218,0.25);">
                         <span class="metric-label" style="color:var(--accent-teal); font-weight:700;">HRV心拍変動指標 (RMSSD)</span>
                         <span class="metric-val highlight" style="color:var(--accent-teal);" id="resHrv">-- ms</span>
+                    </div>
+                </div>
+
+                <!-- Face Type Visualization & Celeb match (Only visible if face detected) -->
+                <div class="glass-card" id="faceVisualMatchCard" style="display: none; margin-top: 15px; border: 1px solid rgba(255, 20, 147, 0.2); background: rgba(10, 20, 42, 0.5); padding: 12px; border-radius: 10px;">
+                    <div style="font-size: 11px; font-weight: 700; color: var(--accent-pink); margin-bottom: 10px; display: flex; align-items: center; gap: 6px;">
+                        <span>👤 あなたの顔骨格タイプ ＆ 理想のイメージモデル</span>
+                    </div>
+                    <div style="display: flex; gap: 15px; align-items: center; flex-wrap: nowrap;">
+                        <!-- Model Image container -->
+                        <div id="faceModelImage" style="width: 75px; height: 100px; background-size: cover; background-position: center; border: 1.5px solid var(--accent-pink); border-radius: 8px; flex-shrink: 0; box-shadow: 0 0 10px rgba(255, 20, 147, 0.25);">
+                        </div>
+                        <!-- Description and famous figures -->
+                        <div style="flex-grow: 1;">
+                            <div id="faceShapeDesc" style="font-size: 11px; color: var(--text-primary); font-weight: 700; margin-bottom: 4px;">--</div>
+                            <div style="font-size: 10px; color: var(--text-secondary); line-height: 1.4; margin-bottom: 6px;" id="faceShapeDetail">--</div>
+                            <div style="font-size: 9px; padding: 6px 10px; background: rgba(255, 255, 255, 0.02); border-radius: 6px; border: 1px solid rgba(255, 255, 255, 0.04); box-sizing: border-box; width: 100%;">
+                                <span style="color: var(--accent-teal); font-weight: 700;">🤝 同じ顔骨格型の偉人・有名人（著作権フリー）:</span><br>
+                                <span id="faceShapeCelebs" style="color: var(--text-primary);">--</span>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
@@ -800,6 +829,7 @@
         const countdownOverlay = document.getElementById('countdownOverlay');
         const countdownNumber = document.getElementById('countdownNumber');
         const desiredFaceTypeSelect = document.getElementById('desiredFaceType');
+        const userAgeSegmentSelect = document.getElementById('userAgeSegment');
 
         const resFaceType = document.getElementById('resFaceType');
         const resSymmetry = document.getElementById('resSymmetry');
@@ -813,6 +843,13 @@
         const portalSenderBox = document.getElementById('portalSenderBox');
         const sendPortalBtn = document.getElementById('sendPortalBtn');
         const togglePortalMock = document.getElementById('togglePortalMock');
+
+        // Face Visual Match DOM Elements
+        const faceVisualMatchCard = document.getElementById('faceVisualMatchCard');
+        const faceModelImage = document.getElementById('faceModelImage');
+        const faceShapeDesc = document.getElementById('faceShapeDesc');
+        const faceShapeDetail = document.getElementById('faceShapeDetail');
+        const faceShapeCelebs = document.getElementById('faceShapeCelebs');
 
         // rPPG Signal processing variables
         const ppgCanvas = document.getElementById('ppgCanvas');
@@ -1667,27 +1704,21 @@
             if (osc) osc.style.display = 'flex';
 
             // 1. Calculate Face Geometry & Structure Type
-            // Real metrics calculation using Landmarks if active
             if (currentLandmarks && !isSimulatedCamera) {
-                // Width = distance between left/right zygomatic edges (234 vs 454)
                 const pLeft = currentLandmarks[234];
                 const pRight = currentLandmarks[454];
                 const fWidth = Math.sqrt(Math.pow(pRight.x - pLeft.x, 2) + Math.pow(pRight.y - pLeft.y, 2));
 
-                // Height = distance between forehead top (10) and chin bottom (152)
                 const pTop = currentLandmarks[10];
                 const pBottom = currentLandmarks[152];
                 const fHeight = Math.sqrt(Math.pow(pBottom.x - pTop.x, 2) + Math.pow(pBottom.y - pTop.y, 2));
 
-                // Aspect ratio
                 const ratio = fWidth / fHeight;
 
-                // Jaw angles (landmarks 58, 288) vs chin (152)
                 const pJawL = currentLandmarks[58];
                 const pJawR = currentLandmarks[288];
                 const jawWidth = Math.sqrt(Math.pow(pJawR.x - pJawL.x, 2) + Math.pow(pJawR.y - pJawL.y, 2));
 
-                // Classification rules
                 if (ratio > 0.84) {
                     currentFaceType = "丸顔 (Round)";
                 } else if (ratio < 0.74) {
@@ -1699,41 +1730,37 @@
                 }
 
                 // Symmetry calculations
-                // Midline point: nose bridge (6), nose tip (4), chin (152)
-                // Compare left and right eye center coordinates distance to midline
                 const midX = (currentLandmarks[6].x + currentLandmarks[4].x + currentLandmarks[152].x) / 3;
-                const eyeLX = currentLandmarks[133].x; // left inner eye
-                const eyeRX = currentLandmarks[362].x; // right inner eye
+                const eyeLX = currentLandmarks[133].x;
+                const eyeRX = currentLandmarks[362].x;
                 
                 const diffL = Math.abs(eyeLX - midX);
                 const diffR = Math.abs(eyeRX - midX);
                 const totalDiff = Math.abs(diffL - diffR) / ((diffL + diffR)/2);
 
                 currentSymmetry = Math.round(100 - (totalDiff * 100));
-                if (currentSymmetry > 98) currentSymmetry = 98; // clamp for natural look
+                if (currentSymmetry > 98) currentSymmetry = 98;
                 if (currentSymmetry < 75) currentSymmetry = 78;
             } else {
-                // Dummy values if simulation mode
                 const shapes = ["丸顔 (Round)", "面長 (Oblong)", "逆三角形 (Heart)", "ベース型 (Square)"];
                 currentFaceType = shapes[Math.floor(Math.random() * shapes.length)];
-                currentSymmetry = Math.floor(Math.random() * 8) + 90; // 90-97%
+                currentSymmetry = Math.floor(Math.random() * 8) + 90;
             }
 
             // 2. Calculate Heart Rate, HRV & Stress
-            calculatedBPM = Math.floor(Math.random() * 8) + 69; // 69-76 bpm
+            calculatedBPM = Math.floor(Math.random() * 8) + 69;
             
-            // Map HRV (RMSSD) based on stress level mock
             let calculatedHRV = 38; 
             const stressRoll = Math.random();
             if (stressRoll < 0.33) {
                 calculatedStress = "低 (Relaxed / リラックス)";
-                calculatedHRV = Math.floor(Math.random() * 15) + 48; // 48-62 ms
+                calculatedHRV = Math.floor(Math.random() * 15) + 48;
             } else if (stressRoll < 0.66) {
                 calculatedStress = "正常 (Normal / バランス良好)";
-                calculatedHRV = Math.floor(Math.random() * 12) + 32; // 32-43 ms
+                calculatedHRV = Math.floor(Math.random() * 12) + 32;
             } else {
                 calculatedStress = "高 (Stressed / ストレス蓄積)";
-                calculatedHRV = Math.floor(Math.random() * 10) + 16; // 16-25 ms
+                calculatedHRV = Math.floor(Math.random() * 10) + 16;
             }
 
             // Render Results GUI
@@ -1746,6 +1773,9 @@
             else if (calculatedHRV < 30) hrvRating = "注意";
             resHrv.innerText = `${calculatedHRV} ms (${hrvRating})`;
 
+            // Render Face Visual Match Card
+            updateFaceVisualMatch();
+
             // Open advice details (makeup or health depending on vertical)
             renderMakeupAdvice();
             
@@ -1756,6 +1786,54 @@
             } else {
                 appStatusBar.innerText = "診断完了！分析レポートとメイクアドバイスを確認してください。";
             }
+        }
+
+        // Helper to update face shape image and historical figures (Targeting Japanese beauty models)
+        function updateFaceVisualMatch() {
+            if (!faceVisualMatchCard) return;
+            faceVisualMatchCard.style.display = 'block';
+            
+            const ageSeg = userAgeSegmentSelect.value; // '20', '30', or '40'
+            let imgUrl = '';
+            let descText = '';
+            let detailText = '';
+            let celebsText = '';
+            let borderColor = '#ff1493';
+            
+            if (currentFaceType.includes("丸顔") || currentFaceType.includes("Round")) {
+                imgUrl = `./model_round_${ageSeg}.png`;
+                descText = `🟢 丸顔 (Round) × ${ageSeg}代モデル`;
+                detailText = '縦横の比率が均等に近く、ふっくらとした可愛らしい頬と丸みを帯びたフェイスラインが特徴。親しみやすく実年齢より若々しい印象を与えやすい愛され骨格です。';
+                celebsText = 'モナ・リザ（絵画）、小野小町（平安美女）、楊貴妃（古代中国の佳人）';
+                borderColor = '#ff1493';
+            } else if (currentFaceType.includes("面長") || currentFaceType.includes("Oblong")) {
+                imgUrl = `./model_oblong_${ageSeg}.png`;
+                descText = `🔵 面長 (Oblong) × ${ageSeg}代モデル`;
+                detailText = '横幅に対して縦の比率が長く、スマートでシャープなフェイスラインが特徴。大人っぽく知性的で、エレガントで凛としたクール・ハンサムな品格を感じさせやすい骨格です。';
+                celebsText = '聖母マリア（ルネサンス絵画）、静御前（源平時代の美女）、紫式部（平安の文筆家）';
+                borderColor = '#00bfff';
+            } else if (currentFaceType.includes("逆三角形") || currentFaceType.includes("Heart")) {
+                imgUrl = `./model_heart_${ageSeg}.png`;
+                descText = `🟢 逆三角形 (Heart/Triangle) × ${ageSeg}代モデル`;
+                detailText = '額の横幅が広く、顎先に向かってシャープに引き締まったラインが特徴。知的で都会的、すっきりとしたスマートで可憐な印象を与えやすい骨格です。';
+                celebsText = 'ヴィーナス（ボッティチェリ絵画）、クレオパトラ（エジプト女王）、細川ガラシャ（戦国美女）';
+                borderColor = '#64ffda';
+            } else {
+                imgUrl = `./model_square_${ageSeg}.png`;
+                descText = `🟡 ベース型 (Square) × ${ageSeg}代モデル`;
+                detailText = 'エラや顎の骨格ラインが直線的で、健康的でしっかりとした顎のラインが特徴。意志の強さやバイタリティ、都会的でエネルギッシュな美しさを感じさせる骨格です。';
+                celebsText = 'マリー・アントワネット（フランス王妃）、巴御前（平安の女武者）、マダム・ポンパドゥール（ロココ文化の牽引者）';
+                borderColor = '#ff9100';
+            }
+            
+            if (faceModelImage) {
+                faceModelImage.style.backgroundImage = `url('${imgUrl}')`;
+                faceModelImage.style.borderColor = borderColor;
+                faceModelImage.style.boxShadow = `0 0 10px ${borderColor}50`;
+            }
+            faceShapeDesc.innerText = descText;
+            faceShapeDetail.innerText = detailText;
+            faceShapeCelebs.innerText = celebsText;
         }
 
         // Render step by step directions and matching sponsors (supports both beauty and health tabs)
@@ -1977,6 +2055,9 @@
             resHeartRate.innerText = `${calculatedBPM} bpm`;
             resStress.innerText = calculatedStress;
             resHrv.innerText = `${demoHRV} ms`;
+
+            // Update Face Visual Match Card
+            updateFaceVisualMatch();
 
             renderMakeupAdvice();
             appStatusBar.innerText = "デモデータを展開しました。なりたい顔を変更してメイクガイドの描画やレコメンドをお試しください。";
